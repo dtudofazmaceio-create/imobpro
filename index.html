@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
@@ -1825,31 +1823,19 @@
             <h3 class="section-title" id="title-imovel">Novo Imóvel</h3>
             <form id="form-imovel" onsubmit="App.imovel.save(event)">
                 <input type="hidden" id="i-id">
+                
                 <div class="form-group">
-    <label class="form-label">Fotos do Imóvel (Máx. 15)</label>
-    <div class="image-counter">Fotos adicionadas: <span id="image-counter">0</span>/15</div>
-    <div class="image-gallery" id="image-gallery">
-        <div class="image-gallery-item add-image-btn" onclick="UI.openCamera()">
-            <i class="fas fa-camera"></i>
-            <span>Câmera</span>
-        </div>
-        <div class="image-gallery-item add-image-btn" onclick="UI.openGallery()">
-            <i class="fas fa-images"></i>
-            <span>Galeria</span>
-        </div>
-        <div class="image-gallery-item add-image-btn" onclick="UI.openDocuments()">
-            <i class="fas fa-file"></i>
-            <span>Documentos</span>
-        </div>
-    </div>
-    
-    <!-- Inputs ocultos -->
-    <input type="file" id="i-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
-    <input type="file" id="i-gallery-input" accept="image/*" multiple style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
-    <input type="file" id="i-docs-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;" onchange="App.imovel.handleDocuments(this)">
-    
-    <input type="hidden" id="i-imagens-data">
-</div>
+                    <label class="form-label">Fotos do Imóvel (Máx. 15)</label>
+                    <div class="image-counter">Fotos adicionadas: <span id="image-counter">0</span>/15</div>
+                    <div class="image-gallery" id="image-gallery">
+                        <div class="image-gallery-item add-image-btn" onclick="document.getElementById('i-imagem-input').click()">
+                            <i class="fas fa-plus"></i>
+                            <span>Adicionar Foto</span>
+                        </div>
+                    </div>
+                    <input type="file" id="i-imagem-input" accept="image/*" multiple style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
+                    <input type="hidden" id="i-imagens-data">
+                </div>
 
                 <div class="form-group">
                     <label class="form-label">Vídeos do Imóvel (Links do YouTube/Vimeo)</label>
@@ -2172,23 +2158,23 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                 
                 <div class="form-group">
                     <label class="form-label">Nome do Corretor</label>
-                    <input type="text" id="s-nome" class="form-control" placeholder="Alex Peixoto">
+                    <input type="text" id="s-nome" class="form-control" placeholder="Corretor">
                 </div>
                 <div class="form-group">
                     <label class="form-label">CRECI</label>
-                    <input type="text" id="s-creci" class="form-control" placeholder="5794-AL">
+                    <input type="text" id="s-creci" class="form-control" placeholder="CRECI-AL">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Telefone</label>
-                    <input type="tel" id="s-telefone" class="form-control" value="(82) 99662-2036" oninput="Utils.maskPhone(this)">
+                    <input type="tel" id="s-telefone" class="form-control" value="SEU TELEFONE" oninput="Utils.maskPhone(this)">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="email" id="s-email" class="form-control" placeholder="alex@resende.com">
+                    <input type="email" id="s-email" class="form-control" placeholder="corretor@resende.com">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Imobiliária</label>
-                    <input type="text" id="s-imobiliaria" class="form-control" placeholder="Resende" value="Resende">
+                    <input type="text" id="s-imobiliaria" class="form-control" placeholder="IMOBILIARIA" value="Resende">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Taxa de Comissão (%)</label>
@@ -2393,11 +2379,11 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                         if (!settings) {
                             const defaultSettings = {
                                 id: 'main',
-                                nome: 'Alex Peixoto',
-                                creci: '5794-AL',
-                                telefone: '(82) 99662-2036',
+                                nome: 'CORRETOR(A)',
+                                creci: 'CRECI-AL',
+                                telefone: 'TELEFONE',
                                 email: '',
-                                imobiliaria: 'Resende',
+                                imobiliaria: 'IMOBLIARIA',
                                 comissao: 5
                             };
                             await this.put('settings', defaultSettings);
@@ -3235,7 +3221,7 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                 
                 const clienteFirstName = cliente.nome.split(' ')[0];
                 let message = `${greeting}, ${clienteFirstName}! Tudo bem? 😊\n\n`;
-                message += `Me chamo ${(await DB.get('settings', 'main')).nome || 'Alex Peixoto'} sou do time de vendas da  ${(await DB.get('settings', 'main')).imobiliaria || 'Resende'}.\n\n`;
+                message += `Me chamo ${(await DB.get('settings', 'main')).nome || 'NOME DO CORRETOR'} sou do time de vendas da  ${(await DB.get('settings', 'main')).imobiliaria || 'Resende'}.\n\n`;
                 
                 if (imovel) {
                     message += `Vi que seu interesse inicial foi no *${imovel.titulo}*.\n\n`;
@@ -3390,11 +3376,11 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                 const settings = await DB.get('settings', 'main');
                 return settings || { 
                     id: 'main',
-                    nome: 'Alex Peixoto',
-                    creci: '5794-AL',
-                    telefone: '(82) 99662-2036',
+                    nome: ' NOME DO CORRETOR(A)',
+                    creci: 'CRECI-AL',
+                    telefone: 'TELEFONE',
                     email: '',
-                    imobiliaria: 'Resende',
+                    imobiliaria: 'IMOBILIARIA',
                     comissao: 5
                 };
             },
@@ -3555,41 +3541,6 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                            dataVenda.getFullYear() === anoAtual && 
                            i.status === 'vendido';
                 });
-                // Adicione estas funções dentro do objeto UI (em qualquer lugar, mas recomendo após as outras funções)
-openCamera: () => {
-    document.getElementById('i-camera-input').click();
-},
-
-openGallery: () => {
-    document.getElementById('i-gallery-input').click();
-},
-
-openDocuments: () => {
-    document.getElementById('i-docs-input').click();
-},
-
-checkAndroidPermissions: async () => {
-    // Verifica se é Android
-    const isAndroid = /Android/.test(navigator.userAgent);
-    
-    if (isAndroid) {
-        try {
-            // Tenta usar a API de permissões se disponível
-            if (navigator.permissions && navigator.permissions.query) {
-                const cameraPermission = await navigator.permissions.query({ name: 'camera' });
-                const galleryPermission = await navigator.permissions.query({ name: 'read' });
-                
-                if (cameraPermission.state === 'denied' || galleryPermission.state === 'denied') {
-                    Utils.toast('Permissão necessária para acessar câmera e galeria', 'error');
-                    return false;
-                }
-            }
-        } catch (e) {
-            console.log('API de permissões não disponível');
-        }
-    }
-    return true;
-},
                 
                 const totalVendas = vendasMes.reduce((acc, i) => acc + (i.precoVenda || 0), 0);
                 document.getElementById('dash-vendas').innerText = Utils.formatCurrency(totalVendas);
@@ -5828,7 +5779,7 @@ checkAndroidPermissions: async () => {
     if (Utils.isBirthdayToday(cliente.dataNascimento)) {
         const idade = Utils.calculateAge(cliente.dataNascimento);
         message = `${greeting}, ${clienteFirstName}! 🎉🎂\n\n`;
-        message += `Me chamo ${settings.nome || 'Alex Peixoto'} sou do time de vendas da  ${settings.imobiliaria || 'Resende'}.\n`;
+        message += `Me chamo ${settings.nome || 'NOME DO CORRETOR'} sou do time de vendas da  ${settings.imobiliaria || 'Resende'}.\n`;
         message += `Gostaria de parabenizá-lo pelos seus ${idade} anos! 🎊\n\n`;
         message += `Desejo muita saúde, felicidade e sucesso! ✨\n`;
         message += `Que este novo ano de vida seja repleto de conquistas! 🏆\n\n`;
@@ -5945,7 +5896,7 @@ checkAndroidPermissions: async () => {
                     const settings = Storage.getSettings();
                     body += `\n📞 *Contato:* ${settings.telefone || '(82) 99662-2036'}\n`;
                     body += `🏢 *Imobiliária:* ${settings.imobiliaria || 'Resende'}\n`;
-                    body += `👨‍💼 *Corretor:* ${settings.nome || 'Alex Peixoto'}\n`;
+                    body += `👨‍💼 *Corretor:* ${settings.nome || 'NOME DO CORRETOR'}\n`;
                     body += `📋 *CRECI:* ${settings.creci || '5794-AL'}`;
                     
                     const mailtoLink = `mailto:${cliente.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -6141,109 +6092,35 @@ checkAndroidPermissions: async () => {
                         Utils.toast('Erro ao processar imagens', 'error');
                     }
                 },
-                handleDocuments: async function(input) {
-    const files = Array.from(input.files || []);
-    if (files.length === 0) return;
-    
-    try {
-        for (const file of files) {
-            // Verifica se é documento (PDF, Word)
-            if (file.type.includes('pdf') || 
-                file.type.includes('msword') ||
-                file.type.includes('wordprocessingml') ||
-                file.name.endsWith('.pdf') ||
-                file.name.endsWith('.doc') ||
-                file.name.endsWith('.docx')) {
-                
-                // Converte para Base64
-                const base64 = await Utils.readImage(file);
-                
-                // Adiciona à lista de imagens (você pode querer armazenar separadamente)
-                const existingImages = JSON.parse(document.getElementById('i-imagens-data').value || '[]');
-                if (existingImages.length < 15) {
-                    existingImages.push({
-                        type: 'document',
-                        name: file.name,
-                        data: base64,
-                        mimeType: file.type
-                    });
-                    
-                    document.getElementById('i-imagens-data').value = JSON.stringify(existingImages);
-                    document.getElementById('image-counter').innerText = existingImages.length;
-                    
-                    // Atualiza a galeria
-                    this.renderImageGallery(existingImages);
-                    
-                    Utils.toast(`Documento ${file.name} adicionado`, 'success');
-                } else {
-                    Utils.toast('Limite de 15 arquivos atingido', 'error');
-                }
-            } else {
-                Utils.toast('Formato de arquivo não suportado', 'error');
-            }
-        }
-        
-        input.value = '';
-        
-    } catch (error) {
-        console.error('Erro ao processar documentos:', error);
-        Utils.toast('Erro ao processar documentos', 'error');
-    }
-},
                 
                 renderImageGallery: function(images) {
-    const gallery = document.getElementById('image-gallery');
-    if (!gallery) return;
-    
-    let html = '';
-    
-    // Primeiro mostra os botões de ação
-    html += `
-        <div class="image-gallery-item add-image-btn" onclick="UI.openCamera()">
-            <i class="fas fa-camera"></i>
-            <span>Câmera</span>
-        </div>
-        <div class="image-gallery-item add-image-btn" onclick="UI.openGallery()">
-            <i class="fas fa-images"></i>
-            <span>Galeria</span>
-        </div>
-        <div class="image-gallery-item add-image-btn" onclick="UI.openDocuments()">
-            <i class="fas fa-file"></i>
-            <span>Documentos</span>
-        </div>
-    `;
-    
-    // Depois mostra as imagens/documents já adicionados
-    images.forEach((img, index) => {
-        if (typeof img === 'string') {
-            // É uma imagem (Base64)
-            html += `
-                <div class="image-gallery-item">
-                    <img src="${img}" class="image-gallery-img" onclick="event.stopPropagation(); UI.openFullscreenFromGallery(${index})">
-                    <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-        } else if (img.type === 'document') {
-            // É um documento
-            const icon = img.mimeType.includes('pdf') ? 'file-pdf' : 'file-word';
-            const color = img.mimeType.includes('pdf') ? '#f56565' : '#2b6cb0';
-            
-            html += `
-                <div class="image-gallery-item" style="background: ${color};">
-                    <i class="fas fa-${icon}" style="font-size: 2rem; color: white; margin-bottom: 10px;"></i>
-                    <span style="color: white; font-size: 0.7rem; text-align: center;">${img.name.substring(0, 15)}...</span>
-                    <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})" style="background: rgba(0,0,0,0.7);">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            `;
-        }
-    });
-    
-    gallery.innerHTML = html;
-},
+                    const gallery = document.getElementById('image-gallery');
+                    if (!gallery) return;
+                    
+                    let html = '';
+                    
+                    images.forEach((img, index) => {
+                        html += `
+                            <div class="image-gallery-item">
+                                <img src="${img}" class="image-gallery-img" onclick="event.stopPropagation(); UI.openFullscreenFromGallery(${index})">
+                                <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                    
+                    if (images.length < 15) {
+                        html += `
+                            <div class="image-gallery-item add-image-btn" onclick="document.getElementById('i-imagem-input').click()">
+                                <i class="fas fa-plus"></i>
+                                <span>Adicionar Foto</span>
+                            </div>
+                        `;
+                    }
+                    
+                    gallery.innerHTML = html;
+                },
                 
                 removeImage: function(index) {
                     const images = JSON.parse(document.getElementById('i-imagens-data').value || '[]');
@@ -6556,9 +6433,9 @@ checkAndroidPermissions: async () => {
                         message += `\n📝 *Descrição:*\n${imovel.descricao.substring(0, 200)}${imovel.descricao.length > 200 ? '...' : ''}\n`;
                     }
                     
-                    message += `\n📞 *Contato:* ${settings.telefone || '(82) 99662-2036'}\n`;
-                    message += `🏢 *Imobiliária:* ${settings.imobiliaria || 'Resende'}\n`;
-                    message += `👨‍💼 *Corretor:* ${settings.nome || 'Alex Peixoto'}\n`;
+                    message += `\n📞 *Contato:* ${settings.telefone || 'TELEFONE'}\n`;
+                    message += `🏢 *Imobiliária:* ${settings.imobiliaria || 'IMOBLIARIA'}\n`;
+                    message += `👨‍💼 *Corretor:* ${settings.nome || 'NOME DO CORRETOR'}\n`;
                     message += `📋 *CRECI:* ${settings.creci || '5794-AL'}`;
                     
                     const encodedMessage = encodeURIComponent(message);
@@ -6844,11 +6721,11 @@ checkAndroidPermissions: async () => {
                         
                         const defaultSettings = {
                             id: 'main',
-                            nome: 'Alex Peixoto',
-                            creci: '5794-AL',
-                            telefone: '(82) 99662-2036',
+                            nome: 'NOME DO CORRETOR(A)',
+                            creci: 'CRECI-AL',
+                            telefone: 'TELEFONE',
                             email: '',
-                            imobiliaria: 'Resende',
+                            imobiliaria: 'IMOBLIARIA',
                             comissao: 5
                         };
                         await DB.put('settings', defaultSettings);
