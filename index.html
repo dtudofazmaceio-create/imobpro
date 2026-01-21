@@ -1825,19 +1825,31 @@
             <h3 class="section-title" id="title-imovel">Novo Imóvel</h3>
             <form id="form-imovel" onsubmit="App.imovel.save(event)">
                 <input type="hidden" id="i-id">
-                
                 <div class="form-group">
-                    <label class="form-label">Fotos do Imóvel (Máx. 15)</label>
-                    <div class="image-counter">Fotos adicionadas: <span id="image-counter">0</span>/15</div>
-                    <div class="image-gallery" id="image-gallery">
-                        <div class="image-gallery-item add-image-btn" onclick="document.getElementById('i-imagem-input').click()">
-                            <i class="fas fa-plus"></i>
-                            <span>Adicionar Foto</span>
-                        </div>
-                    </div>
-                    <input type="file" id="i-imagem-input" accept="image/*" multiple style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
-                    <input type="hidden" id="i-imagens-data">
-                </div>
+    <label class="form-label">Fotos do Imóvel (Máx. 15)</label>
+    <div class="image-counter">Fotos adicionadas: <span id="image-counter">0</span>/15</div>
+    <div class="image-gallery" id="image-gallery">
+        <div class="image-gallery-item add-image-btn" onclick="UI.openCamera()">
+            <i class="fas fa-camera"></i>
+            <span>Câmera</span>
+        </div>
+        <div class="image-gallery-item add-image-btn" onclick="UI.openGallery()">
+            <i class="fas fa-images"></i>
+            <span>Galeria</span>
+        </div>
+        <div class="image-gallery-item add-image-btn" onclick="UI.openDocuments()">
+            <i class="fas fa-file"></i>
+            <span>Documentos</span>
+        </div>
+    </div>
+    
+    <!-- Inputs ocultos -->
+    <input type="file" id="i-camera-input" accept="image/*" capture="environment" style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
+    <input type="file" id="i-gallery-input" accept="image/*" multiple style="display: none;" onchange="App.imovel.handleMultipleImages(this)">
+    <input type="file" id="i-docs-input" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display: none;" onchange="App.imovel.handleDocuments(this)">
+    
+    <input type="hidden" id="i-imagens-data">
+</div>
 
                 <div class="form-group">
                     <label class="form-label">Vídeos do Imóvel (Links do YouTube/Vimeo)</label>
@@ -3543,6 +3555,41 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                            dataVenda.getFullYear() === anoAtual && 
                            i.status === 'vendido';
                 });
+                // Adicione estas funções dentro do objeto UI (em qualquer lugar, mas recomendo após as outras funções)
+openCamera: () => {
+    document.getElementById('i-camera-input').click();
+},
+
+openGallery: () => {
+    document.getElementById('i-gallery-input').click();
+},
+
+openDocuments: () => {
+    document.getElementById('i-docs-input').click();
+},
+
+checkAndroidPermissions: async () => {
+    // Verifica se é Android
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    if (isAndroid) {
+        try {
+            // Tenta usar a API de permissões se disponível
+            if (navigator.permissions && navigator.permissions.query) {
+                const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+                const galleryPermission = await navigator.permissions.query({ name: 'read' });
+                
+                if (cameraPermission.state === 'denied' || galleryPermission.state === 'denied') {
+                    Utils.toast('Permissão necessária para acessar câmera e galeria', 'error');
+                    return false;
+                }
+            }
+        } catch (e) {
+            console.log('API de permissões não disponível');
+        }
+    }
+    return true;
+},
                 
                 const totalVendas = vendasMes.reduce((acc, i) => acc + (i.precoVenda || 0), 0);
                 document.getElementById('dash-vendas').innerText = Utils.formatCurrency(totalVendas);
@@ -6094,35 +6141,109 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                         Utils.toast('Erro ao processar imagens', 'error');
                     }
                 },
+                handleDocuments: async function(input) {
+    const files = Array.from(input.files || []);
+    if (files.length === 0) return;
+    
+    try {
+        for (const file of files) {
+            // Verifica se é documento (PDF, Word)
+            if (file.type.includes('pdf') || 
+                file.type.includes('msword') ||
+                file.type.includes('wordprocessingml') ||
+                file.name.endsWith('.pdf') ||
+                file.name.endsWith('.doc') ||
+                file.name.endsWith('.docx')) {
                 
-                renderImageGallery: function(images) {
-                    const gallery = document.getElementById('image-gallery');
-                    if (!gallery) return;
-                    
-                    let html = '';
-                    
-                    images.forEach((img, index) => {
-                        html += `
-                            <div class="image-gallery-item">
-                                <img src="${img}" class="image-gallery-img" onclick="event.stopPropagation(); UI.openFullscreenFromGallery(${index})">
-                                <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        `;
+                // Converte para Base64
+                const base64 = await Utils.readImage(file);
+                
+                // Adiciona à lista de imagens (você pode querer armazenar separadamente)
+                const existingImages = JSON.parse(document.getElementById('i-imagens-data').value || '[]');
+                if (existingImages.length < 15) {
+                    existingImages.push({
+                        type: 'document',
+                        name: file.name,
+                        data: base64,
+                        mimeType: file.type
                     });
                     
-                    if (images.length < 15) {
-                        html += `
-                            <div class="image-gallery-item add-image-btn" onclick="document.getElementById('i-imagem-input').click()">
-                                <i class="fas fa-plus"></i>
-                                <span>Adicionar Foto</span>
-                            </div>
-                        `;
-                    }
+                    document.getElementById('i-imagens-data').value = JSON.stringify(existingImages);
+                    document.getElementById('image-counter').innerText = existingImages.length;
                     
-                    gallery.innerHTML = html;
-                },
+                    // Atualiza a galeria
+                    this.renderImageGallery(existingImages);
+                    
+                    Utils.toast(`Documento ${file.name} adicionado`, 'success');
+                } else {
+                    Utils.toast('Limite de 15 arquivos atingido', 'error');
+                }
+            } else {
+                Utils.toast('Formato de arquivo não suportado', 'error');
+            }
+        }
+        
+        input.value = '';
+        
+    } catch (error) {
+        console.error('Erro ao processar documentos:', error);
+        Utils.toast('Erro ao processar documentos', 'error');
+    }
+},
+                
+                renderImageGallery: function(images) {
+    const gallery = document.getElementById('image-gallery');
+    if (!gallery) return;
+    
+    let html = '';
+    
+    // Primeiro mostra os botões de ação
+    html += `
+        <div class="image-gallery-item add-image-btn" onclick="UI.openCamera()">
+            <i class="fas fa-camera"></i>
+            <span>Câmera</span>
+        </div>
+        <div class="image-gallery-item add-image-btn" onclick="UI.openGallery()">
+            <i class="fas fa-images"></i>
+            <span>Galeria</span>
+        </div>
+        <div class="image-gallery-item add-image-btn" onclick="UI.openDocuments()">
+            <i class="fas fa-file"></i>
+            <span>Documentos</span>
+        </div>
+    `;
+    
+    // Depois mostra as imagens/documents já adicionados
+    images.forEach((img, index) => {
+        if (typeof img === 'string') {
+            // É uma imagem (Base64)
+            html += `
+                <div class="image-gallery-item">
+                    <img src="${img}" class="image-gallery-img" onclick="event.stopPropagation(); UI.openFullscreenFromGallery(${index})">
+                    <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        } else if (img.type === 'document') {
+            // É um documento
+            const icon = img.mimeType.includes('pdf') ? 'file-pdf' : 'file-word';
+            const color = img.mimeType.includes('pdf') ? '#f56565' : '#2b6cb0';
+            
+            html += `
+                <div class="image-gallery-item" style="background: ${color};">
+                    <i class="fas fa-${icon}" style="font-size: 2rem; color: white; margin-bottom: 10px;"></i>
+                    <span style="color: white; font-size: 0.7rem; text-align: center;">${img.name.substring(0, 15)}...</span>
+                    <button class="remove-image-btn" onclick="event.stopPropagation(); App.imovel.removeImage(${index})" style="background: rgba(0,0,0,0.7);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+        }
+    });
+    
+    gallery.innerHTML = html;
+},
                 
                 removeImage: function(index) {
                     const images = JSON.parse(document.getElementById('i-imagens-data').value || '[]');
