@@ -3520,316 +3520,173 @@ Pedro Costa - (11) 77777-7777 - Solicitou proposta de financiamento</textarea>
                 UI.renderImoveis(searchTerm, tipoFilter, statusFilter);
             },
 
-            renderDashboard: () => {
-                const { clientes, imoveis, visitas } = UI.data;
-                
-                document.getElementById('dash-total-clientes').innerText = clientes.length;
-                document.getElementById('dash-total-imoveis').innerText = imoveis.length;
-                
-                const hoje = Utils.getToday();
-                const visitasHoje = visitas.filter(v => v.data === hoje && v.status !== 'cancelado');
-                document.getElementById('dash-visitas').innerText = visitasHoje.length;
-                
-                const hojeObj = new Date();
-                const mesAtual = hojeObj.getMonth();
-                const anoAtual = hojeObj.getFullYear();
-                
-                const vendasMes = imoveis.filter(i => {
-                    if (!i.dataVenda) return false;
-                    const dataVenda = new Date(i.dataVenda);
-                    return dataVenda.getMonth() === mesAtual && 
-                           dataVenda.getFullYear() === anoAtual && 
-                           i.status === 'vendido';
-                });
-                
-                const totalVendas = vendasMes.reduce((acc, i) => acc + (i.precoVenda || 0), 0);
-                document.getElementById('dash-vendas').innerText = Utils.formatCurrency(totalVendas);
-                
-                const negociacoes = imoveis.filter(i => i.status === 'reservado').length;
-                document.getElementById('dash-negociacoes').innerText = negociacoes;
-                
-                const destaques = imoveis.filter(i => i.destaque).length;
-                document.getElementById('dash-destaques').innerText = destaques;
-                
-                UI.renderAniversariantes();
-                
-                const visitasList = document.getElementById('visitas-list');
-                if(visitasHoje.length === 0) {
-                    visitasList.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Nenhuma visita agendada para hoje!</p></div>`;
-                } else {
-                    visitasList.innerHTML = visitasHoje.map(v => UI.createVisitaCard(v)).join('');
-                }
-                
-                const negociacoesList = document.getElementById('negociacoes-list');
-                const imoveisReservados = imoveis.filter(i => i.status === 'reservado').slice(0, 3);
-                
-                if(imoveisReservados.length === 0) {
-                    negociacoesList.innerHTML = `<div class="empty-state"><i class="fas fa-handshake"></i><p>Nenhuma negociação ativa!</p></div>`;
-                } else {
-                    negociacoesList.innerHTML = imoveisReservados.map(i => UI.createNegociacaoCard(i)).join('');
-                }
-                
-                document.getElementById('visitas-badge').style.display = visitasHoje.length > 0 ? 'inline-block' : 'none';
-                document.getElementById('negociacoes-badge').style.display = imoveisReservados.length > 0 ? 'inline-block' : 'none';
-            },
+            renderDashboard: async () => {
+    const { clientes, imoveis, visitas } = UI.data;
+    
+    // Total básico
+    document.getElementById('dash-total-clientes').innerText = clientes.length;
+    document.getElementById('dash-total-imoveis').innerText = imoveis.length;
+    
+    // Visitas de hoje
+    const hoje = Utils.getToday();
+    const visitasHoje = visitas.filter(v => v.data === hoje && v.status !== 'cancelado');
+    document.getElementById('dash-visitas').innerText = visitasHoje.length;
+    
+    // ============ VENDAS DO MÊS ============
+    // Baseado nos clientes na etapa "venda" do funil
+    const hojeObj = new Date();
+    const mesAtual = hojeObj.getMonth();
+    const anoAtual = hojeObj.getFullYear();
+    
+// VENDAS DO MÊS - Apenas clientes que entraram na etapa "venda" este mês
+let totalVendasMes = 0;
+const hojeObj = new Date();
+const mesAtual = hojeObj.getMonth();
+const anoAtual = hojeObj.getFullYear();
 
-            renderAniversariantes: () => {
-                const hoje = new Date();
-                const diaHoje = hoje.getDate();
-                const mesHoje = hoje.getMonth() + 1;
-                
-                const aniversariantes = UI.data.clientes.filter(cliente => {
-                    if (!cliente.dataNascimento) return false;
-                    const nascimento = new Date(cliente.dataNascimento);
-                    return nascimento.getDate() === diaHoje && (nascimento.getMonth() + 1) === mesHoje;
-                });
-                
-                const aniversariantesList = document.getElementById('aniversariantes-list');
-                const badge = document.getElementById('aniversariantes-badge');
-                
-                if (aniversariantes.length === 0) {
-                    aniversariantesList.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-birthday-cake"></i>
-                            <p>Nenhum aniversariante hoje</p>
-                        </div>
-                    `;
-                    badge.style.display = 'none';
-                } else {
-                    aniversariantesList.innerHTML = aniversariantes.map(cliente => {
-                        const idade = Utils.calculateAge(cliente.dataNascimento);
-                        return `
-                            <div class="client-card" onclick="App.cliente.edit('${cliente.id}')">
-                                <div class="client-header">
-                                    <div class="client-name">${cliente.nome} <span class="badge badge-pink">🎂 ${idade ? idade + ' anos' : 'Aniversário'}</span></div>
-                                    <span class="client-type type-${cliente.tipo}">${Utils.getTipoClienteText(cliente.tipo)}</span>
-                                </div>
-                                <div class="client-info">
-                                    <div class="client-row"><i class="fas fa-phone"></i> ${cliente.telefone}</div>
-                                    ${cliente.email ? `<div class="client-row"><i class="fas fa-envelope"></i> ${cliente.email}</div>` : ''}
-                                    ${cliente.dataNascimento ? `<div class="client-row"><i class="fas fa-birthday-cake"></i> ${Utils.formatDate(cliente.dataNascimento)}</div>` : ''}
-                                </div>
-                                <div class="client-actions">
-                                    <button class="btn-whatsapp-client" onclick="event.stopPropagation(); App.cliente.whatsappPersonalizado('${cliente.id}')">
-                                        <i class="fab fa-whatsapp"></i> Parabéns!
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    badge.style.display = 'inline-block';
-                    badge.innerText = aniversariantes.length.toString();
-                }
-            },
+const clientesVendidosMes = clientes.filter(c => {
+    if (c.etapaFunil !== 'venda') return false;
+    
+    // Verifica se entrou na etapa "venda" este mês
+    if (c.dataEntradaFunil) {
+        const dataEntrada = new Date(c.dataEntradaFunil);
+        return dataEntrada.getMonth() === mesAtual && 
+               dataEntrada.getFullYear() === anoAtual;
+    }
+    return false;
+});
 
-            renderFunil: async () => {
-                const etapas = UI.data.funilEtapas.sort((a, b) => a.ordem - b.ordem);
+clientesVendidosMes.forEach(cliente => {
+    if (cliente.imovelInteresseId) {
+        const imovel = imoveis.find(i => i.id === cliente.imovelInteresseId);
+        if (imovel && imovel.precoVenda) {
+            totalVendasMes += parseFloat(imovel.precoVenda) || 0;
+        }
+    }
+});
+
+document.getElementById('dash-vendas').innerText = Utils.formatCurrency(totalVendasMes);  
                 
-                const totalClientes = UI.data.clientes.length;
-                const clientesPorEtapa = {};
-                let totalVendas = 0;
-                let totalDias = 0;
-                let clientesComData = 0;
-                
-                etapas.forEach(etapa => {
-                    const clientes = UI.data.clientes.filter(c => c.etapaFunil === etapa.id);
-                    clientesPorEtapa[etapa.id] = clientes;
-                    
-                    if (etapa.id === 'venda') {
-                        totalVendas = clientes.length;
-                    }
-                    
-                    clientes.forEach(cliente => {
-                        if (cliente.dataEntradaFunil) {
-                            const dias = Utils.calculateDaysInStage(cliente.dataEntradaFunil);
-                            totalDias += dias;
-                            clientesComData++;
-                        }
-                    });
-                });
-                
-                document.getElementById('funil-lead').textContent = clientesPorEtapa['lead']?.length || 0;
-                document.getElementById('funil-venda').textContent = totalVendas;
-                document.getElementById('funil-total').textContent = `${totalClientes} clientes`;
-                
-                const taxaConversao = totalClientes > 0 ? ((totalVendas / totalClientes) * 100).toFixed(1) : 0;
-                document.getElementById('funil-taxa').textContent = `${taxaConversao}%`;
-                
-                const tempoMedio = clientesComData > 0 ? Math.round(totalDias / clientesComData) : 0;
-                document.getElementById('funil-tempo').textContent = `${tempoMedio}d`;
-                
-                const container = document.getElementById('funil-stages-container');
-                let html = '<div class="funnel-stages">';
-                
-                etapas.forEach(etapa => {
-                    const clientes = clientesPorEtapa[etapa.id] || [];
-                    const porcentagem = totalClientes > 0 ? Math.round((clientes.length / totalClientes) * 100) : 0;
-                    
-                    html += `
-                        <div class="funnel-stage stage-${etapa.id}" 
-                             onclick="UI.toggleFunnelStage('${etapa.id}')" 
-                             ondragover="event.preventDefault(); event.currentTarget.classList.add('drop-zone');" 
-                             ondragleave="event.currentTarget.classList.remove('drop-zone');"
-                             ondrop="UI.dropOnStage(event, '${etapa.id}'); event.currentTarget.classList.remove('drop-zone');">
-                            <div class="funnel-stage-header">
-                                <div class="funnel-stage-title">
-                                    <i class="fas fa-${UI.getFunnelIcon(etapa.id)}"></i>
-                                    ${etapa.nome}
-                                </div>
-                                <span class="funnel-stage-count" style="background: ${etapa.cor}; color: white;">${clientes.length}</span>
-                            </div>
-                            <div class="progress-container">
-                                <div class="progress-bar" style="width: ${porcentagem}%; background: ${etapa.cor};"></div>
-                            </div>
-                            <div class="funnel-stage-clients" id="funnel-clients-${etapa.id}">
-                                ${clientes.map(cliente => `
-                                    <div class="funnel-client-item" 
-                                         draggable="true" 
-                                         data-cliente-id="${cliente.id}"
-                                         ondragstart="UI.startDrag(event, '${cliente.id}')"
-                                         onclick="event.stopPropagation(); App.cliente.edit('${cliente.id}')">
-                                        <div class="funnel-client-name">${cliente.nome}</div>
-                                        <div class="funnel-client-days">
-                                            ${cliente.dataEntradaFunil ? `${Utils.calculateDaysInStage(cliente.dataEntradaFunil)} dias` : 'Novo'}
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                container.innerHTML = html;
-                
-                UI.renderClientesFunil();
-                
-                const select = document.querySelector('#funil-view select');
-                if (select) {
-                    select.innerHTML = '<option value="todos">Todos os estágios</option>';
-                    etapas.forEach(etapa => {
-                        select.innerHTML += `<option value="${etapa.id}">${etapa.nome}</option>`;
-                    });
+    // ============ NEGOCIAÇÕES ATIVAS ============
+    // Baseado nos clientes em etapas de negociação (documentacao, aprovado, contrato)
+    const etapasNegociacao = ['documentacao', 'aprovado', 'contrato'];
+    const clientesEmNegociacao = clientes.filter(c => etapasNegociacao.includes(c.etapaFunil));
+    
+    let valorNegociacoes = 0;
+    let contagemNegociacoes = 0;
+    
+    clientesEmNegociacao.forEach(cliente => {
+        if (cliente.imovelInteresseId) {
+            const imovel = imoveis.find(i => i.id === cliente.imovelInteresseId);
+            if (imovel) {
+                contagemNegociacoes++;
+                if (imovel.precoVenda) {
+                    valorNegociacoes += parseFloat(imovel.precoVenda) || 0;
+                } else if (imovel.precoAluguel) {
+                    valorNegociacoes += parseFloat(imovel.precoAluguel) || 0;
                 }
-            },
+            }
+        }
+    });
+    
+    // Mostra a quantidade de negociações (não o valor)
+    document.getElementById('dash-negociacoes').innerText = contagemNegociacoes;
+    
+    // ============ DESTAQUES ============
+    // Baseado na quantidade de clientes interessados em cada imóvel
+    const interessePorImovel = {};
+    
+    clientes.forEach(cliente => {
+        if (cliente.imovelInteresseId) {
+            interessePorImovel[cliente.imovelInteresseId] = 
+                (interessePorImovel[cliente.imovelInteresseId] || 0) + 1;
+        }
+    });
+    
+    // Conta quantos imóveis têm pelo menos 1 cliente interessado
+    const imoveisComInteresse = Object.keys(interessePorImovel).length;
+    document.getElementById('dash-destaques').innerText = imoveisComInteresse;
+    
+    // ============ ANIVERSARIANTES ============
+    UI.renderAniversariantes();
+    
+    // ============ AGENDA DE HOJE ============
+    const visitasList = document.getElementById('visitas-list');
+    if(visitasHoje.length === 0) {
+        visitasList.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-check"></i><p>Nenhuma visita agendada para hoje!</p></div>`;
+    } else {
+        visitasList.innerHTML = visitasHoje.map(v => UI.createVisitaCard(v)).join('');
+    }
+    
+    // ============ NEGOCIAÇÕES RECENTES ============
+    const negociacoesList = document.getElementById('negociacoes-list');
+    
+    // Pega os 3 primeiros clientes em negociação para mostrar
+    const clientesParaExibir = clientesEmNegociacao.slice(0, 3);
+    
+    if(clientesParaExibir.length === 0) {
+        negociacoesList.innerHTML = `<div class="empty-state"><i class="fas fa-handshake"></i><p>Nenhuma negociação ativa!</p></div>`;
+    } else {
+        negociacoesList.innerHTML = clientesParaExibir.map(cliente => {
+            const imovel = cliente.imovelInteresseId ? 
+                imoveis.find(i => i.id === cliente.imovelInteresseId) : null;
             
-            getFunnelIcon: (etapaId) => {
-                const icons = {
-                    'lead': 'user-plus',
-                    'contato': 'phone-alt',
-                    'cpf': 'search',
-                    'sem-restricao': 'check-circle',
-                    'documentacao': 'file-contract',
-                    'aprovado': 'thumbs-up',
-                    'contrato': 'pen-fancy',
-                    'venda': 'trophy'
-                };
-                return icons[etapaId] || 'circle';
-            },
-            
-            toggleFunnelStage: (etapaId) => {
-                const stage = document.querySelector(`.stage-${etapaId}`);
-                if (!stage) return;
-                
-                const clientsContainer = document.getElementById(`funnel-clients-${etapaId}`);
-                if (!clientsContainer) return;
-                
-                if (stage.classList.contains('expanded')) {
-                    stage.classList.remove('expanded');
-                    clientsContainer.style.maxHeight = '0';
-                } else {
-                    document.querySelectorAll('.funnel-stage.expanded').forEach(s => {
-                        s.classList.remove('expanded');
-                        const id = s.className.match(/stage-(\w+)/);
-                        if (id && id[1]) {
-                            const container = document.getElementById(`funnel-clients-${id[1]}`);
-                            if (container) container.style.maxHeight = '0';
-                        }
-                    });
-                    
-                    stage.classList.add('expanded');
-                    clientsContainer.style.maxHeight = `${clientsContainer.scrollHeight}px`;
-                }
-            },
-            
-            startDrag: (event, clienteId) => {
-                event.dataTransfer.setData('text/plain', clienteId);
-                UI.draggingClient = clienteId;
-                event.currentTarget.classList.add('dragging');
-            },
-            
-            dropOnStage: async (event, etapaId) => {
-                event.preventDefault();
-                const clienteId = event.dataTransfer.getData('text/plain');
-                
-                if (clienteId) {
-                    const cliente = UI.data.clientes.find(c => c.id === clienteId);
-                    if (cliente && cliente.etapaFunil !== etapaId) {
-                        cliente.etapaFunil = etapaId;
-                        cliente.dataEntradaFunil = new Date().toISOString().split('T')[0];
-                        await DB.put('clientes', cliente);
-                        UI.data.clientes = await Storage.getClientes();
-                        UI.renderFunil();
-                        UI.renderClientes();
-                        Utils.toast(`${cliente.nome} movido para ${Utils.getEtapaFunilText(etapaId)}`);
-                    }
-                }
-                
-                document.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
-                UI.draggingClient = null;
-            },
-            
-            renderClientesFunil: (filterEtapa = 'todos') => {
-                const container = document.getElementById('funil-clientes-list');
-                let clientes = UI.data.clientes;
-                
-                if (filterEtapa !== 'todos') {
-                    clientes = clientes.filter(c => c.etapaFunil === filterEtapa);
-                }
-                
-                if (clientes.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="fas fa-users"></i>
-                            <p>Nenhum cliente neste estágio do funil</p>
-                        </div>
-                    `;
-                    return;
-                }
-                
-                container.innerHTML = clientes.map(cliente => {
-                    const etapa = UI.data.funilEtapas.find(e => e.id === cliente.etapaFunil);
-                    const dias = cliente.dataEntradaFunil ? Utils.calculateDaysInStage(cliente.dataEntradaFunil) : 0;
-                    
-                    return `
-                        <div class="client-card" onclick="App.cliente.edit('${cliente.id}')">
-                            <div class="client-header">
-                                <div class="client-name">${cliente.nome}</div>
-                                <span class="client-type" style="background: ${etapa?.cor || '#93c5fd'}; color: white;">
-                                    ${etapa?.nome || 'Lead'}
-                                </span>
-                            </div>
-                            <div class="client-info">
-                                <div class="client-row"><i class="fas fa-phone"></i> ${cliente.telefone}</div>
-                                ${cliente.email ? `<div class="client-row"><i class="fas fa-envelope"></i> ${cliente.email}</div>` : ''}
-                                <div class="client-row"><i class="fas fa-calendar"></i> ${dias} dias nesta etapa</div>
-                                ${cliente.faixaPreco ? `<div class="client-row"><i class="fas fa-search-dollar"></i> ${cliente.faixaPreco}</div>` : ''}
-                            </div>
-                            <div class="client-actions">
-                                <button class="btn-whatsapp-client" onclick="event.stopPropagation(); App.cliente.whatsappPersonalizado('${cliente.id}')">
-                                    <i class="fab fa-whatsapp"></i> WhatsApp
-                                </button>
-                                <button class="btn-email-client" onclick="event.stopPropagation(); App.cliente.email('${cliente.id}')">
-                                    <i class="fas fa-envelope"></i> Email
-                                </button>
-                                <button class="btn-sm btn-light" onclick="event.stopPropagation(); App.cliente.edit('${cliente.id}')">
-                                    <i class="fas fa-edit"></i> Editar
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            },
+            return `
+                <div class="client-card" onclick="App.cliente.edit('${cliente.id}')">
+                    <div class="client-header">
+                        <div class="client-name">${cliente.nome}</div>
+                        <span class="badge badge-warning">NEGOCIAÇÃO</span>
+                    </div>
+                    <div class="client-info">
+                        <div class="client-row"><i class="fas fa-phone"></i> ${cliente.telefone}</div>
+                        ${imovel ? `<div class="client-row"><i class="fas fa-home"></i> ${imovel.titulo.substring(0, 30)}...</div>` : ''}
+                        <div class="client-row"><i class="fas fa-filter"></i> ${UI.data.funilEtapas.find(e => e.id === cliente.etapaFunil)?.nome || 'Negociação'}</div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    // ============ BADGES DE NOTIFICAÇÃO ============
+    document.getElementById('visitas-badge').style.display = visitasHoje.length > 0 ? 'inline-block' : 'none';
+    document.getElementById('negociacoes-badge').style.display = clientesEmNegociacao.length > 0 ? 'inline-block' : 'none';
+    
+    // ============ DEBUG NO CONSOLE ============
+    console.log('=== DASHBOARD - CÁLCULOS POR FUNIL ===');
+    console.log('Clientes na etapa "venda":', clientesVendidos.length);
+    console.log('Valor total de vendas:', Utils.formatCurrency(totalVendas));
+    console.log('Clientes em negociação:', clientesEmNegociacao.length);
+    console.log('Imóveis com clientes interessados:', imoveisComInteresse);
+    
+    // Mostra detalhes das negociações
+    clientesEmNegociacao.forEach((cliente, index) => {
+        const imovel = cliente.imovelInteresseId ? 
+            imoveis.find(i => i.id === cliente.imovelInteresseId) : null;
+        console.log(`${index + 1}. ${cliente.nome} - ${UI.data.funilEtapas.find(e => e.id === cliente.etapaFunil)?.nome || cliente.etapaFunil} - Imóvel: ${imovel?.titulo || 'Nenhum'}`);
+    });
+},
+            // Adicione esta função após a função renderDashboard
+getImoveisDestaques: () => {
+    const { clientes, imoveis } = UI.data;
+    
+    // Conta quantos clientes têm interesse em cada imóvel
+    const interessePorImovel = {};
+    
+    clientes.forEach(cliente => {
+        if (cliente.imovelInteresseId) {
+            interessePorImovel[cliente.imovelInteresseId] = 
+                (interessePorImovel[cliente.imovelInteresseId] || 0) + 1;
+        }
+    });
+    
+    // Ordena os imóveis por quantidade de interesses
+    const imoveisOrdenados = imoveis
+        .filter(imovel => interessePorImovel[imovel.id])
+        .sort((a, b) => (interessePorImovel[b.id] || 0) - (interessePorImovel[a.id] || 0))
+        .slice(0, 5); // Top 5 imóveis
+    
+    return imoveisOrdenados;
+},
             
             filterClientesFunil: (etapaId) => {
                 UI.renderClientesFunil(etapaId);
